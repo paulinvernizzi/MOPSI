@@ -9,23 +9,17 @@ if (True):
     # VARIABLES_GLOBALES
     # Obstacles
     global Obstacles_Rectangle
-    global Nb_obstacles_Cercle
-    global Obstacles_Cercle
     global Sortie
-    global Nb_Sortie
     # Objets
     global D_S
-    global Nb_objets
     global q
     global V_new
     global V_ant
     global Rayon
-    global Ray
     global Code
     global Tau
     global Allure
     global Masse
-    global D_S
     global T_d
     global Rayon_m
     global Masse_m
@@ -34,7 +28,6 @@ if (True):
     global B_m
     global dist_soc
     global Tau_m
-    global Rayon_m
     global T_m
     # geometrie et descritisation
     global T
@@ -45,23 +38,17 @@ if (True):
     global Xmaxx
     global Yminn
     global Ymaxx
-    # Choc
-    global choc
-    global C_N
-    global K_N
     # Forces
     global R_obj
     global R_obs
     global d_obs
+    global A_obs
+    global B_obs
     global d_obj
     global A_obj
     global B_obj
     # Marche al�atoire
     global Direcs
-    # Nombre de contacts
-    global ind_interact
-    global temps_interact
-    global NC
     # Matrices pour la transmission
     global p_infecte
     global p_infectious
@@ -71,7 +58,7 @@ if (True):
     global nbr_indirecte
     global nbr_directe
 
-    Nb_indiv = 10
+    Nb_indiv = 50
     pop = np.zeros((3, 16))
     pop[0] = np.array([0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00]) / 100
     pop[1] = np.floor(Nb_indiv * pop[0])
@@ -79,24 +66,24 @@ if (True):
     pop[1, 5] = pop[1, 5] + erreur
     pop[2] = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80]
     ## mise à jour de Nb_indiv
-    Nb_indiv = sum(pop[1]);
+    Nb_indiv = sum(pop[1])
     ## Tableau contenant les vitesses souhaitées de chaque classe d'age
-    Taille = 16;
-    vitess_m = np.zeros((2, Taille));
-    vitess_m[0] = [1.10, 1.57, 1.78, 1.99, 1.89, 1.84, 1.81, 1.81, 1.75, 1.71, 1.67, 1.65, 1.65, 1.63, 1.07, 0.07];
+    Taille = 16
+    vitess_m = np.zeros((2, Taille))
+    vitess_m[0] = [1.10, 1.57, 1.78, 1.99, 1.89, 1.84, 1.81, 1.81, 1.75, 1.71, 1.67, 1.65, 1.65, 1.63, 1.07, 0.07]
     vitess_m[1] = [0.292, 0.292, 0.292, 0.323, 0.323, 0.246, 0.246, 0.246, 0.246, 0.246, 0.243, 0.243, 0.243, 0.255,
-                      0.255, 0.255];
+                      0.255, 0.255]
     ## Tableau contenant les vitesses souhaitées de chaque classe d'age
-    Taille = 16;
-    dist_soc = np.zeros((2, Taille));
-    dist_soc[0] = [1.20, 1.20, 1.26, 1.26, 1.35, 1.35, 1.34, 1.34, 1.35, 1.35, 1.29, 1.29, 1.33, 1.33, 1.34, 1.34];
+    Taille = 16
+    dist_soc = np.zeros((2, Taille))
+    dist_soc[0] = [1.20, 1.20, 1.26, 1.26, 1.35, 1.35, 1.34, 1.34, 1.35, 1.35, 1.29, 1.29, 1.33, 1.33, 1.34, 1.34]
     dist_soc[1] = [0.415, 0.415, 0.415, 0.415, 0.305, 0.305, 0.305, 0.305, 0.305, 0.305, 0.397, 0.397, 0.397, 0.397,
-                      0.397, 0.397];
+                      0.397, 0.397]
     ## Tableau contenant les rayons de chaque classe d'age
-    Taille = 16;
-    Masse_m = np.zeros((2, Taille));
+    Taille = 16
+    Masse_m = np.zeros((2, Taille))
     Masse_m[0] = [9.79, 21.129, 34.525, 53.456, 58.08, 64.32, 68.4, 71.5, 59.1, 65.3, 58.99, 60.36, 72.1, 71.995,
-                     67.005, 70.39];
+                     67.005, 70.39]
     Masse_m[1] = [6.1, 2.816, 6.553, 8.798, 13.1, 13.1, 10.3, 10.3, 10.8, 10.8, 10.13, 10.3, 12.02, 13.63, 15.5,
                      16.71];
     # Masse_m[2,:]=[1.22,0.488,1.16,5.192,5.192,5.152,5.152,4.728,4.728,3.782,3.782,3.70,3.70,4.492,4.492,4.314];
@@ -132,7 +119,7 @@ if (True):
     N_iter = T / h;
     n = 0;
     ## le domaine dans lequel va ï¿½voluer le systï¿½me
-    Xmin = -1.;
+    Xmin = -1;
     Xmax = 111.;
     Ymin = -1.;
     Ymax = 121.;
@@ -162,9 +149,9 @@ if (True):
     R_obj = 10;
     ## la force repulsive pieton-obstacle
     A_obs = 1000;
-    B_obs = 0.8;
-    d_obs = 1.8;
-    R_obs = 10;
+    B_obs = 0.8
+    d_obs = 1.8
+    R_obs = 10
     #######################"
     ## Creation de la geometrie
     eps = 1
@@ -179,13 +166,6 @@ if (True):
     Obstacles_Rectangle = []
     # Duree de visite du centre commercial
     T_d = [];
-    ### Matrices d'interaction
-    # C=np.zeros(16);
-    # ind_interact=zeros(3*Nb_objets,Nb_objets);
-    # ind_interact(1,1:Nb_objets)=1:1:Nb_objets;
-    # temps_interact=zeros(3*Nb_objets,Nb_objets);
-    # temps_interact(1,1:Nb_objets)=1:1:Nb_objets;
-    # NC=0;
     ## Matrices pour la transmission du virus
     p_infecte = [];
     p_infectious = [];
@@ -197,7 +177,7 @@ if (True):
     ## Parmetres des equations de Concentration du virus
     sigma = (0.1732 / 3600);  # duree de vie du virus sur les surfaces
     d0 = 2;  # distance maximale a  laquelle une surface est contaminee
-    pd = 0.04;
+    pd = 0.9;
     hx = 0.5;  # le pas de discretisation
 
     ## discretisation de l'espace
@@ -216,15 +196,15 @@ if (True):
     # Initialisation de la matrice contenant les indices des individus
     # infectieux
     p_infectious = []
-    t = 0;
+    t = 0
     ##matrice contenant le nombre de contamination pour chaque classe d'age
-    Matrix = np.zeros((1, 16));
+    Matrix = np.zeros((1, 16))
 
 #### FONCTIONS ANNEXES
 def direction_souhaitee(n,D_S):
     Nb_objets = len(Objets)
     if (n == 1):
-        choice = np.random.randint(1, 8, size = Nb_objets);
+        choice = np.random.randint(1, 8, size = Nb_objets)
         D_S = np.array([Direcs[choix] for choix in choice])
     if (n % 10 == 0):
         aa = np.random.randint(1, Nb_objets, size = int(np.floor(Nb_objets * 0.8)))
@@ -238,19 +218,10 @@ def Dis_obstacle_rectangle(j):
     rayon = Rayon[j]
     for obstacle in Obstacles_Rectangle:
         x1,y1,x2,y2 = obstacle
-        if (Objet[0] > x1):
-            dx = np.min([Objet[0] - rayon - xi for xi in np.arange(x1,x2,hx) ])
-        elif (Objet[0] < x2):
-            dx = np.min([ -1*Objet[0] + rayon + xi for xi in np.arange(x1,x2,hx) ])
-        else:
-            dx = 0
-        if (Objet[1] > y1):
-            dy = np.min([Objet[1] - rayon - yi for yi in np.arange(y1,y2,hx)])
-        elif (Objet[1] < y2):
-            dy = np.min([ -1*Objet[1] + rayon + yi for yi in np.arange(y1, y2, hx)])
-        else:
-            dy = 0
-        A.append([(d_obs > dx)*A_obs*np.exp(-1*(d_obs - dx)/B_obs),(d_obs > dy)*A_obs*np.exp(-1*(d_obs - dy)/B_obs)])
+        dy = ( (y2 - Objet[1])*(y2 > Objet[1]) + (y1 - Objet[1])*(y1 < Objet[1]) ) * (Objet[0] > x1 and Objet[0] < x2) + 10e99 * (Objet[0] <= x1 or Objet[0] >= x2)
+        dx = ( (Objet[0] - x2)*(Objet[0] > x2) + (x1 - Objet[0])*(Objet[0] < x1) ) * (Objet[1] < y2 and Objet[1] > y1) + 10e99 * (Objet[1] <= y1 or Objet[1] >= y2)
+        d = np.sqrt(dx**2 + dy **2)
+        A.append([(d_obs > dx)*A_obs*np.exp((d_obs - d)/B_obs)*(-1)*(dx <= 0),(d_obs > dy)*A_obs*np.exp((d_obs - d)/B_obs)*(-1)*(dy<=0) ])
         return np.array(A)
 
 def Dis_objet_objet(i):
@@ -338,15 +309,15 @@ def Ajouter_Plusieurs_Objets(N,cod):
 #### AJOUT OBSTACLES ET OBJETS
 if (True):
     #bas
-    Ajouter_Obstacle_Rectangle(Xmin,Ymin,Xmax-Xmin+eps,eps);
+    Ajouter_Obstacle_Rectangle(Xmin,Ymin,Xmax-Xmin,eps)
     #droite bas
-    Ajouter_Obstacle_Rectangle(Xmax-eps,Ymin,eps,60+eps);
+    Ajouter_Obstacle_Rectangle(Xmax-eps,Ymin,eps,60+eps)
     #gauche
-    Ajouter_Obstacle_Rectangle(Xmin,Ymin,eps,Ymax-Ymin);
+    Ajouter_Obstacle_Rectangle(Xmin,Ymin,eps,Ymax-Ymin)
     #haut
-    Ajouter_Obstacle_Rectangle(Xmin,Ymax-eps,60+eps,eps);
+    Ajouter_Obstacle_Rectangle(Xmin,Ymax-eps,60+eps,eps)
     #obstacle haut droite
-    Ajouter_Obstacle_Rectangle(60,60,50+eps,60+eps);
+    Ajouter_Obstacle_Rectangle(60,60,50+eps,60+eps)
     #obstacles représentant les stands
     Ajouter_Obstacle_Rectangle(10,60,15,eps)
     Ajouter_Obstacle_Rectangle(35,60,15,eps)
@@ -372,12 +343,9 @@ if (True):
     p_s = list(set(p_s).difference(set(p_infectious)))
     D_S = np.array(range(len(Objets)),dtype= tuple)
 
-#### FONCTIONS AFFICHAGE
-
-
 V_ant = np.zeros((len(Objets),2))
 while (n < N_iter + 1 and len(Objets) > 0):
-    if(n %10 == 0):
+    if(n %100 == 0):
         fig, ax = plt.subplots()
         ax.cla()
         ax.scatter(0, 0, c='w')
@@ -394,15 +362,15 @@ while (n < N_iter + 1 and len(Objets) > 0):
             height = obstacle[3] - obstacle[1]
             ax.add_patch(Rectangle((x, y), width, height, color="black"))
         ax.set(xlim = (Xminn,Xmaxn),ylim = (Yminn, Ymaxn))
-        ax.imshow(np.transpose(C),origin = "lower", extent = (Xminn,Xmaxn,Yminn,Ymaxn))
+        ax.imshow(C,origin = "lower", extent = (Xminn,Xmaxn,Yminn,Ymaxn))
         plt.show()
 
     n = n + 1
-    t = t + h;
+    t = t + h
     Objets = np.array(Objets)
     ## parametre servant à l'implémentation de la transmission
-    Wd = np.zeros((len(X),len(X[0])));
-    v_test = 0;
+    Wd = np.zeros((len(X),len(X[0])))
+    v_test = 0
     D_S = direction_souhaitee(n,D_S)
 
     ## force d'acceleration
@@ -412,7 +380,7 @@ while (n < N_iter + 1 and len(Objets) > 0):
 
     ## force répulsive obstacle rectangulaire
     for j in range(len(Objets)):
-        A = Dis_obstacle_rectangle(j);
+        A = Dis_obstacle_rectangle(j)
         f_obs[j,0] = sum(A[:,0])
         f_obs[j,1] = sum(A[:,1])
 
@@ -422,13 +390,25 @@ while (n < N_iter + 1 and len(Objets) > 0):
         f_obj[j,0] = sum(A[:,0])
         f_obj[j,1] = sum(A[:,1])
 
+    if (n == 1):
+        continue
     ## prédiction de la vitesse
-    f = f_ac + 1. / np.array(Masse) * (f_obj + f_obs);
-    print(f)
-    V_new = V_ant + h * f;
+    f = f_ac + 1. / np.array(Masse) * (f_obj + f_obs)
+    V_new = V_ant + h * f
+
+    ## chocs
+    qprime = q + (V_new+V_ant)*h/2
+    for j in range(len(Objets)):
+        q1 = Objets[j]
+        q2 = qprime[j]
+        rayon = Rayon[j]
+        for obstacle in Obstacles_Rectangle:
+            if ((q1[1] > obstacle[1] and q1[1] < obstacle[3]) and ( (q1[0] > obstacle[2] + rayon and q2[0] < obstacle[2] + rayon) or (q1[0] < obstacle[0] - rayon and q2[0] > obstacle[0] - rayon))):
+                V_new[j] = V_new[j] = [-1*V_new[j, 0], V_new[j, 1]]
+            if ((q1[0] > obstacle[0] and q1[0] < obstacle[2]) and ( (q1[1] > obstacle[3] + rayon and q2[1] < obstacle[3] + rayon) or (q1[1] < obstacle[1] - rayon and q2[1] > obstacle[1] - rayon))):
+                V_new[j] = [V_new[j, 0], -1 * V_new[j, 1]]
 
     ## correction de la vitesse
-    # normalement inutile le truc des chocs
     q = q + (V_new+V_ant)*h/2
     V_ant = V_new
     Dist = []
@@ -443,10 +423,10 @@ while (n < N_iter + 1 and len(Objets) > 0):
     if len(p_infectious) != 0:
         for drr in range(len(p_infectious)):
             i = p_infectious[drr]
-            ip = int(min(max(np.round((q[i,0] - Xminn) / hx) + 1, 0), 224))
-            jp = int(min(max(np.round((q[i,1] - Yminn) / hx) + 1, 0), 244))
-            d = np.array(np.sqrt((X - X[ip, jp])**2 + (Y - Y[ip, jp])**2))
-            MI = (d < d0)*0.25 * (1 + np.cos(np.pi * d / d0))
+            ip = np.argmin([ abs(q[i,0] - x) for x in X[0]])
+            jp = np.argmin([ abs(q[i,1] - y) for y in Y[:,0]])
+            d = np.array(np.sqrt((X - X[jp, ip])**2 + (Y - Y[jp, ip])**2))
+            MI = (d < d0)* 0.25 * (1 + np.cos(np.pi * d / d0))
             Wd = Wd + MI
 
     ## contamination directe
@@ -477,10 +457,10 @@ while (n < N_iter + 1 and len(Objets) > 0):
     if len(p_infectious) != 0:
         if len(p_s) != 0:
             for p in p_s:
-                ip=int(min(max(round((q[p,0]-Xminn) / hx) , 0), 224))
-                jp=int(min(max(round((q[p,1]-Yminn) / hx) , 0), 244))
+                ip = np.argmin([abs(q[i, 0] - x) for x in X[0]])
+                jp = np.argmin([abs(q[i, 1] - y) for y in Y[:, 0]])
                 prob=rd.random();
-                p_a= 0.015 * C[ip, jp]
+                p_a= 0.015 * C[jp, ip]
                 if p_a > prob :
                     # Affichage
                     v_test=v_test+1
@@ -492,8 +472,8 @@ while (n < N_iter + 1 and len(Objets) > 0):
                     #co=Code(p_s(indf));
                     #categ = categorical(co, [1:16], {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16'})
                     #Matrix = Matrix + histcounts(categ)
-                    p_s.pop(p_inf)
-                    p_infecte.append(p_inf)
+                    p_s.pop(p)
+                    p_infecte.append(p)
     #if v_test == 0 :
         #nbr_directe = [nbr_directe;t, n_directe];
         #nbr_indirecte = [nbr_indirecte;t, n_indirecte];
