@@ -1,65 +1,13 @@
 import numpy as np
 import random as rd
-from matplotlib import animation
+import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from IPython import display
 
 #### INITIALISATION
 if (True):
-    # VARIABLES_GLOBALES
-    # Obstacles
-    global Obstacles_Rectangle
-    global Stand
-    global Sortie
-    # Objets
-    global D_S
-    global q
-    global V_new
-    global V_ant
-    global Rayon
-    global Code
-    global Tau
-    global Allure
-    global Masse
-    global T_d
-    global Rayon_m
-    global Masse_m
-    global vitess_m
-    global A_m
-    global B_m
-    global dist_soc
-    global Tau_m
-    global T_m
-    # geometrie et descritisation
-    global T
-    global h
-    global N_iter
-    global ph
-    global Xminn
-    global Xmaxx
-    global Yminn
-    global Ymaxx
-    # Forces
-    global R_obj
-    global R_obs
-    global d_obs
-    global A_obs
-    global B_obs
-    global d_obj
-    global A_obj
-    global B_obj
-    # Marche al�atoire
-    global Direcs
-    # Matrices pour la transmission
-    global p_infecte
-    global p_infectious
-    global p_s
-    global nbr_s
-    global nbr_infecte
-    global nbr_indirecte
-    global nbr_directe
-
-    Nb_indiv = 50
+    Nb_indiv = 100
     pop = np.zeros((3, 16))
     pop[0] = np.array([0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00]) / 100
     pop[1] = np.floor(Nb_indiv * pop[0])
@@ -125,7 +73,7 @@ if (True):
     Xmin = -1
     Xmax = 111.
     Ymin = -1.
-    Ymax = 121.
+    Ymax = 105.
     ## pour la marche alï¿½atoire
     Direcs = np.array([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]])
     ## Pour Fast Marching
@@ -168,6 +116,7 @@ if (True):
     Code = []
     Obstacles_Rectangle = []
     Stand=[]
+    Zone_Interdite = []
     # Duree de visite du centre commercial
     T_d = []
     ## Matrices pour la transmission du virus
@@ -181,7 +130,7 @@ if (True):
     ## Parmetres des equations de Concentration du virus
     sigma = (0.1732 / 3600);  # duree de vie du virus sur les surfaces
     d0 = 2;  # distance maximale a  laquelle une surface est contaminee
-    pd = 0.9
+    pd = 0.04
     hx = 0.5;  # le pas de discretisation
 
     ## discretisation de l'espace
@@ -251,6 +200,9 @@ def Ajouter_Obstacle_Rectangle(x,y,longueur,largeur):
     global Obstacles_Rectangles
     Obstacles_Rectangle.append([x,y,x+longueur,y+largeur])
 
+def Ajouter_Zone_Interdite(x,y,largeur,longueur):
+    Zone_Interdite.append([x,y,x+largeur,y+longueur])
+
 def Ajouter_Objet(x,y,ray,cod,allure):
     global Objets
     global Rayon
@@ -298,20 +250,25 @@ def Ajouter_Plusieurs_Objets(N,cod):
                 interieur_cadre = (Distance_mur_sup > 0) and (Distance_mur_inf > 0) and (Distance_mur_dro > 0) and (Distance_mur_gau > 0)
                 interieur_obstacle = 1
                 interieur_objet = 1
+                interieur_zone = 1
+                for zone in Zone_Interdite:
+                    if (q2[0] > zone[0] - rayon and q2[0] < zone[2] + rayon and q2[1] > zone[1] - rayon and q2[1] < zone[3] + rayon):
+                        interieur_zone *= 0
                 for obstacle in Obstacles_Rectangle:
                     if (q2[0] > obstacle[0] - rayon and q2[0] < obstacle[2] + rayon and q2[1] > obstacle[1] - rayon and q2[1] < obstacle[3] + rayon):
                         interieur_obstacle *= 0
                 for objet in Objets:
                     if (q2[0] > objet[0] - 2 * rayon and q2[0] < objet[0] + 2 * rayon and q2[1] > objet[1] - 2 * rayon and q2[1] < objet[1] + 2 * rayon):
                         interieur_objet *= 0
-                if (interieur_cadre and interieur_objet == 1 and interieur_obstacle == 1):
+                if (interieur_cadre and interieur_objet == 1 and interieur_obstacle == 1 and interieur_zone == 1):
                     neglige = 0
+                    Ajouter_Objet(q2[0], q2[1], rayon, cod, vitess)
                 else:
                     neglige = 1
-            Ajouter_Objet(q2[0],q2[1],rayon,cod,vitess)
 
 #### AJOUT OBSTACLES ET OBJETS
 if (True):
+    Ajouter_Zone_Interdite(60,60,50+eps,45+eps)
     #bas
     Ajouter_Obstacle_Rectangle(Xmin,Ymin,Xmax-Xmin,eps)
     #droite bas
@@ -321,13 +278,13 @@ if (True):
     #haut
     Ajouter_Obstacle_Rectangle(Xmin,Ymax-eps,60+eps,eps)
     #obstacle haut droite
-    Ajouter_Obstacle_Rectangle(60,60,50+eps,60+eps)
-    Ajouter_Obstacle_Rectangle(0,105,60,15)
+    Ajouter_Obstacle_Rectangle(60,60,50+eps,eps)
+    Ajouter_Obstacle_Rectangle(60,60,eps,45)
     Ajouter_Obstacle_Rectangle(0,45,17,11)
     Ajouter_Obstacle_Rectangle(0,34,25,11)
     Ajouter_Obstacle_Rectangle(0,10,8,25)
     Ajouter_Obstacle_Rectangle(60,0,50,10)
-    #stands 
+    #stands
     mini=1
     for i in range(3):
         for j in range(18):
@@ -373,29 +330,32 @@ if (True):
     D_S = np.array(range(len(Objets)),dtype= tuple)
 
 V_ant = np.zeros((len(Objets),2))
+ims = []
+fig, ax = plt.subplots()
 while (n < N_iter + 1 and len(Objets) > 0):
-    if(n %100 == 0):
-        fig, ax = plt.subplots()
-        ax.cla()
-        ax.scatter(0, 0, c='w')
-        for j in range(len(q)):
-            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="blue",zorder=2))
-        for j in p_infectious:
-            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="red",zorder=2))
-        for j in p_infecte:
-            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="yellow",zorder=2))
-        for obstacle in Obstacles_Rectangle:
-            x = obstacle[0]
-            y = obstacle[1]
-            width = obstacle[2] - obstacle[0]
-            height = obstacle[3] - obstacle[1]
-            ax.add_patch(patches.Rectangle((x, y), width, height, color="black"))
-        for stand in Stands:
-            ax.add_patch(patches.Rectangle((stand[0],stand[1]),stand[2],stand[3],color="white",zorder=1))
-        ax.set(xlim = (Xminn,Xmaxn),ylim = (Yminn, Ymaxn))
-        ax.imshow(C,origin = "lower", extent = (Xminn,Xmaxn,Yminn,Ymaxn))
-        plt.show()
-
+    ax.cla()
+    ax.scatter(0, 0, c='w')
+    for j in range(len(q)):
+        ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="purple"))
+    for j in p_infectious:
+        ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="red"))
+    for j in p_infecte:
+        ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="yellow"))
+    for obstacle in Obstacles_Rectangle:
+        x = obstacle[0]
+        y = obstacle[1]
+        width = obstacle[2] - obstacle[0]
+        height = obstacle[3] - obstacle[1]
+        ax.add_patch(patches.Rectangle((x, y), width, height, color="black"))
+    for stand in Stands:
+        ax.add_patch(patches.Rectangle((stand[0],stand[1]),0.2,stand[3],color="white"))
+        ax.add_patch(patches.Rectangle((stand[0], stand[1]), stand[2], 0.2, color="white"))
+        ax.add_patch(patches.Rectangle((stand[0]+stand[2], stand[1]), 0.2, stand[3], color="white"))
+        ax.add_patch(patches.Rectangle((stand[0], stand[1]+stand[3]), stand[2], 0.2, color="white"))
+    ax.set(xlim = (Xminn,Xmaxn),ylim = (Yminn, Ymaxn))
+    im = ax.imshow(C,origin = "lower",cmap = plt.cm.rainbow, extent = (Xminn,Xmaxn,Yminn,Ymaxn),animated = True)
+    ims.append([im])
+    plt.pause(0.00001)
     n = n + 1
     t = t + h
     Objets = np.array(Objets)
@@ -449,7 +409,10 @@ while (n < N_iter + 1 and len(Objets) > 0):
     for i in range(len(Objets)):
         list_dist = []
         for j in range(len(Objets)):
-            list_dist.append(np.sqrt((Objets[i,0]-Objets[j,0])**2 + (Objets[i,1]- Objets[j,1])**2))
+            if i != j :
+                list_dist.append(np.sqrt((q[i,0]-q[j,0])**2 + (q[i,1]- q[j,1])**2))
+            else :
+                list_dist.append(10e99)
         Dist.append(list_dist)
     Dist = np.array(Dist)
 
@@ -468,11 +431,13 @@ while (n < N_iter + 1 and len(Objets) > 0):
         if len(p_s) != 0 :
             for p in p_infectious:
                 mdist = Dist[p,:]
-                col = np.where(mdist<1)[0]
+                col = np.where(mdist<5)[0]
+                col = list(set(col).difference(set(p_infecte)))
                 if len(col) != 0 :
-                    prob = [rd.random() for i in range(len(col))]
-                    indf = np.where(p < pd)[0]
+                    prob = np.array([rd.random() for i in range(len(col))])
+                    indf = np.where(prob < pd)[0]
                     if len(indf) != 0:
+                        print("ind infecté !")
                         # Affichage
                         v_test = v_test + 1
                         n_directe = n_directe + len(indf)
@@ -484,8 +449,7 @@ while (n < N_iter + 1 and len(Objets) > 0):
                         #categ = categorical(co, [1:16], {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16'})
                         #Matrix = Matrix + histcounts(categ)
                         for p_inf in indf :
-                            p_s.pop(p_inf)
-                            p_infecte.append(p_inf)
+                            p_infecte.append(col[p_inf])
 
     ## contamination indirecte
     if len(p_infectious) != 0:
@@ -496,6 +460,7 @@ while (n < N_iter + 1 and len(Objets) > 0):
                 prob=rd.random()
                 p_a= 0.015 * C[jp, ip]
                 if p_a > prob :
+                    print("ind infecté")
                     # Affichage
                     v_test=v_test+1
                     n_indirecte=n_indirecte+1
@@ -513,3 +478,4 @@ while (n < N_iter + 1 and len(Objets) > 0):
         #nbr_indirecte = [nbr_indirecte;t, n_indirecte];
         #nbr_infecte = [nbr_infecte;t, n_infecte];
     C = C + h * (0.001 * Wd - sigma * C)
+plt.show()
