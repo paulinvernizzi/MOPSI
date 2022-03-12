@@ -2,13 +2,14 @@ import numpy as np
 import random as rd
 from matplotlib import animation
 import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
+import matplotlib.patches as patches
 
 #### INITIALISATION
 if (True):
     # VARIABLES_GLOBALES
     # Obstacles
     global Obstacles_Rectangle
+    global Stand
     global Sortie
     # Objets
     global D_S
@@ -85,70 +86,72 @@ if (True):
     Masse_m[0] = [9.79, 21.129, 34.525, 53.456, 58.08, 64.32, 68.4, 71.5, 59.1, 65.3, 58.99, 60.36, 72.1, 71.995,
                      67.005, 70.39]
     Masse_m[1] = [6.1, 2.816, 6.553, 8.798, 13.1, 13.1, 10.3, 10.3, 10.8, 10.8, 10.13, 10.3, 12.02, 13.63, 15.5,
-                     16.71];
+                     16.71]
     # Masse_m[2,:]=[1.22,0.488,1.16,5.192,5.192,5.152,5.152,4.728,4.728,3.782,3.782,3.70,3.70,4.492,4.492,4.314];
     # Masse_m[2,:]=[1.22,0.488,5.82,25.95,25.95,25.76,25.76,23.64,23.64,18.91,18.91,18.5,18.5,22.46,22.46,21.57]
     densite = 500
     ##Tableau contenant les rayons
-    Rayon_m = np.sqrt(Masse_m / (500 * np.pi));
+    Rayon_m = np.sqrt(Masse_m / (500 * np.pi))
     ## Tableau contenant l'amplitude de la force de repulsion pour differentes classes d'age
-    Taille = 16;
-    A_m = np.zeros((2, Taille));
+    Taille = 16
+    A_m = np.zeros((2, Taille))
     # A_m[1,:]=[10,10,75,110,122,127,142,142,180,225,247,247,290,305,305,305];
     A_m[0] = 700 * np.ones((1, Taille))
-    A_m[1] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    A_m[1] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ## Tableau contenant la portee de la force de repulsion pour chaque classe
-    Taille = 16;
-    B_m = np.zeros((2, Taille));
-    B_m[0] = [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8];
-    B_m[1] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    Taille = 16
+    B_m = np.zeros((2, Taille))
+    B_m[0] = [0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8]
+    B_m[1] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ## Tableau contenant le tau de relaxation de chauqe classe
-    Taille = 16;
-    Tau_m = np.zeros((2, Taille));
-    Tau_m[0] = [0.5, 0.5, 0.5, 0.54, 0.54, 0.54, 0.54, 0.54, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71];
-    Tau_m[1] = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1];
+    Taille = 16
+    Tau_m = np.zeros((2, Taille))
+    Tau_m[0] = [0.5, 0.5, 0.5, 0.54, 0.54, 0.54, 0.54, 0.54, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71, 0.71]
+    Tau_m[1] = [0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
     ## duree de visite du centre pour chaque classe
-    Taille = 16;
-    T_m = np.zeros((2, Taille));
+    Taille = 16
+    T_m = np.zeros((2, Taille))
     T_m[0] = [300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300];
     ## Le nombre d'obstacles & Sorties
     Obstacles_Rectangles = []
+    ##Les stands
+    Stands=[]
     ## la durï¿½e de simulation, le pas de temps espace et le nombre d'itï¿½rations
-    T = 300;
+    T = 300
     h = 1e-1;  # pas du temps
-    N_iter = T / h;
-    n = 0;
+    N_iter = T / h
+    n = 0
     ## le domaine dans lequel va ï¿½voluer le systï¿½me
-    Xmin = -1;
-    Xmax = 111.;
-    Ymin = -1.;
-    Ymax = 121.;
+    Xmin = -1
+    Xmax = 111.
+    Ymin = -1.
+    Ymax = 121.
     ## pour la marche alï¿½atoire
     Direcs = np.array([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]])
     ## Pour Fast Marching
-    ph = 1;
+    ph = 1
     # Lorsque la sortie est en bordure d'espace, augmenter la taille de l'espace d'ï¿½volution pour ne pas avoir de problï¿½me
-    nph = 5;
-    Xminn = Xmin - nph * ph;
-    Xmaxn = Xmax + nph * ph;
-    Yminn = Ymin - nph * ph;
-    Ymaxn = Ymax + nph * ph;
+    nph = 5
+    Xminn = Xmin - nph * ph
+    Xmaxn = Xmax + nph * ph
+    Yminn = Ymin - nph * ph
+    Ymaxn = Ymax + nph * ph
     ## Les parametres de l'equation de contact
-    K_N_obj = 1000;
-    K_T_obj = 0;
-    K_T_obs = 0;
-    K_N_obs = 1e5;
-    K_T = 0;
-    K_N = 0;
+    K_N_obj = 1000
+    K_T_obj = 0
+    K_T_obs = 0
+    K_N_obs = 1e5
+    K_T = 0
+    K_N = 0
     ## Les parametres intervenant dans les forces
     ## la force repulsive pieton-pieton
-    A_obj = [];
-    B_obj = [];
-    alpha = 0.9;
-    d_obj = [];
-    R_obj = 10;
+    A_obj = []
+    B_obj = []
+    alpha = 0.9
+    d_obj = []
+    R_obj = 10
     ## la force repulsive pieton-obstacle
-    A_obs = 1000;
+    A_obs = 1000
     B_obs = 0.8
     d_obs = 1.8
     R_obs = 10
@@ -164,20 +167,21 @@ if (True):
     Tau = []
     Code = []
     Obstacles_Rectangle = []
+    Stand=[]
     # Duree de visite du centre commercial
-    T_d = [];
+    T_d = []
     ## Matrices pour la transmission du virus
-    p_infecte = [];
-    p_infectious = [];
+    p_infecte = []
+    p_infectious = []
     p_s = []
-    nbr_s = [];
-    nbr_infecte = [];
-    nbr_indirecte = [];
-    nbr_directe = [];
+    nbr_s = []
+    nbr_infecte = []
+    nbr_indirecte = []
+    nbr_directe = []
     ## Parmetres des equations de Concentration du virus
     sigma = (0.1732 / 3600);  # duree de vie du virus sur les surfaces
     d0 = 2;  # distance maximale a  laquelle une surface est contaminee
-    pd = 0.9;
+    pd = 0.9
     hx = 0.5;  # le pas de discretisation
 
     ## discretisation de l'espace
@@ -318,28 +322,53 @@ if (True):
     Ajouter_Obstacle_Rectangle(Xmin,Ymax-eps,60+eps,eps)
     #obstacle haut droite
     Ajouter_Obstacle_Rectangle(60,60,50+eps,60+eps)
-    #obstacles représentant les stands
-    Ajouter_Obstacle_Rectangle(10,60,15,eps)
-    Ajouter_Obstacle_Rectangle(35,60,15,eps)
-    Ajouter_Obstacle_Rectangle(10,70,15,eps)
-    Ajouter_Obstacle_Rectangle(35,70,15,eps)
-    Ajouter_Obstacle_Rectangle(10,80,15,eps)
-    Ajouter_Obstacle_Rectangle(35,80,15,eps)
-    Ajouter_Obstacle_Rectangle(10,90,15,eps)
-    Ajouter_Obstacle_Rectangle(35,90,15,eps)
+    Ajouter_Obstacle_Rectangle(0,105,60,15)
+    Ajouter_Obstacle_Rectangle(0,45,17,11)
+    Ajouter_Obstacle_Rectangle(0,34,25,11)
+    Ajouter_Obstacle_Rectangle(0,10,8,25)
+    Ajouter_Obstacle_Rectangle(60,0,50,10)
+    #stands 
+    mini=1
+    for i in range(3):
+        for j in range(18):
+            Stands.append([6+48*j/18,89+3*i,1,1])
+        Stands.append([30,79-9*i,7,5])
+    Stands.append([28,61,9,5])
+    Stands.append([28,52,9,5])
+    Stands.append([32,43,8,5])
+    Stands.append([31,25,7,5])
+    Stands.append([31,16,7,5])
+    Stands.append([18,79,4.5,2.5])
+    Stands.append([42,79,6,5])
+    Stands.append([42,70,7,5])
+    Stands.append([42,61,7,5])
+    Stands.append([43,52,6,5])
+    Stands.append([46,43,9,5])
+    Stands.append([18,70,4.5,5])
+    Stands.append([13.5,61,9,5])
+    Stands.append([61,43,7,5])
+    Stands.append([23,16,4.5,5])
+    Stands.append([23,25,4.5,5])
+    Stands.append([42,16,4.5,5])
+    Stands.append([42,25,4.5,5])
+    Stands.append([60,10,15,10])
+    Stands.append([60,25,10,10])
+    Stands.append([46,34,7,5])
+    Stands.append([38,34,4,5])
+    Stands.append([50,16,4.5,5])
+    Stands.append([50,25,4.5,5])
     #obstacke représentant l'entrée
-    Ajouter_Obstacle_Rectangle(10,20,40,5)
     #obstacle représentant la salle à droite
-    Ajouter_Obstacle_Rectangle(60,Ymin,eps,25)
-    Ajouter_Obstacle_Rectangle(60,35,eps,25)
+    Ajouter_Obstacle_Rectangle(76,Ymin+5,eps,25)
+    Ajouter_Obstacle_Rectangle(76,40,eps,20)
     #ajout des personnes
     for i in range(len(pop[2])):
-        Ajouter_Plusieurs_Objets(int(pop[1,i]),i);
+        Ajouter_Plusieurs_Objets(int(pop[1,i]),i)
     q = np.array(Objets)
     p_infectious = rd.sample([i for i in range(len(Objets))],3)
     ### Initialisation de la matrice contenant les indices des susceptibles
     p_s = np.array(range(len(Objets)))
-    p_s = p_s.copy();
+    p_s = p_s.copy()
     p_s = list(set(p_s).difference(set(p_infectious)))
     D_S = np.array(range(len(Objets)),dtype= tuple)
 
@@ -360,7 +389,9 @@ while (n < N_iter + 1 and len(Objets) > 0):
             y = obstacle[1]
             width = obstacle[2] - obstacle[0]
             height = obstacle[3] - obstacle[1]
-            ax.add_patch(Rectangle((x, y), width, height, color="black"))
+            ax.add_patch(patches.Rectangle((x, y), width, height, color="black"))
+        for stand in Stands:
+            ax.add_patch(patches.Rectangle((stand[0],stand[1]),stand[2],stand[3],color="white"))
         ax.set(xlim = (Xminn,Xmaxn),ylim = (Yminn, Ymaxn))
         ax.imshow(C,origin = "lower", extent = (Xminn,Xmaxn,Yminn,Ymaxn))
         plt.show()
@@ -389,6 +420,9 @@ while (n < N_iter + 1 and len(Objets) > 0):
         A = Dis_objet_objet(j)
         f_obj[j,0] = sum(A[:,0])
         f_obj[j,1] = sum(A[:,1])
+
+    ## force attractive stands 
+  
 
     if (n == 1):
         continue
@@ -459,7 +493,7 @@ while (n < N_iter + 1 and len(Objets) > 0):
             for p in p_s:
                 ip = np.argmin([abs(q[i, 0] - x) for x in X[0]])
                 jp = np.argmin([abs(q[i, 1] - y) for y in Y[:, 0]])
-                prob=rd.random();
+                prob=rd.random()
                 p_a= 0.015 * C[jp, ip]
                 if p_a > prob :
                     # Affichage
