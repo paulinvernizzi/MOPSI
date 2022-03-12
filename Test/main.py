@@ -379,11 +379,11 @@ while (n < N_iter + 1 and len(Objets) > 0):
         ax.cla()
         ax.scatter(0, 0, c='w')
         for j in range(len(q)):
-            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="blue"))
+            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="blue",zorder=2))
         for j in p_infectious:
-            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="red"))
+            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="red",zorder=2))
         for j in p_infecte:
-            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="yellow"))
+            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="yellow",zorder=2))
         for obstacle in Obstacles_Rectangle:
             x = obstacle[0]
             y = obstacle[1]
@@ -391,7 +391,7 @@ while (n < N_iter + 1 and len(Objets) > 0):
             height = obstacle[3] - obstacle[1]
             ax.add_patch(patches.Rectangle((x, y), width, height, color="black"))
         for stand in Stands:
-            ax.add_patch(patches.Rectangle((stand[0],stand[1]),stand[2],stand[3],color="white"))
+            ax.add_patch(patches.Rectangle((stand[0],stand[1]),stand[2],stand[3],color="white",zorder=1))
         ax.set(xlim = (Xminn,Xmaxn),ylim = (Yminn, Ymaxn))
         ax.imshow(C,origin = "lower", extent = (Xminn,Xmaxn,Yminn,Ymaxn))
         plt.show()
