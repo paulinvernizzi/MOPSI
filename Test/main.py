@@ -7,7 +7,7 @@ from IPython import display
 
 #### INITIALISATION
 if (True):
-    Nb_indiv = 100
+    Nb_indiv = 200
     pop = np.zeros((3, 16))
     pop[0] = np.array([0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00]) / 100
     pop[1] = np.floor(Nb_indiv * pop[0])
@@ -266,6 +266,23 @@ def Ajouter_Plusieurs_Objets(N,cod):
                 else:
                     neglige = 1
 
+def in_zone(x,y,i):
+    X,Y,l,h=Stands[i]
+    if X+l/5<x<X+4*l/5 and Y+h/5<y<Y+4*h/5:
+        return True
+    else: 
+        return False
+
+def zone(k):
+    resu=0
+    for i in range(len(Stands)):
+        if in_zone(q[k][0],q[k][1],i):
+            resu=i
+    if resu==0:
+        if in_zone(q[k][0],q[k][1],i)==False:
+            resu=-1
+    return resu
+
 #### AJOUT OBSTACLES ET OBJETS
 if (True):
     Ajouter_Zone_Interdite(60,60,50+eps,45+eps)
@@ -329,12 +346,15 @@ if (True):
     p_s = list(set(p_s).difference(set(p_infectious)))
     D_S = np.array(range(len(Objets)),dtype= tuple)
 
+dimZ=len(Stands)+1
+Z=[[0 for i in range(len(Stands)+1)] for j in range(len(Objets))]
+
 V_ant = np.zeros((len(Objets),2))
 ims = []
 fig, ax = plt.subplots()
 while (n < N_iter + 1 and len(Objets) > 0):
     ax.cla()
-    ax.scatter(0, 0, c='w')
+    ax.scatter(0, 0, s=0.1, c='black')
     for j in range(len(q)):
         ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="purple"))
     for j in p_infectious:
@@ -354,6 +374,8 @@ while (n < N_iter + 1 and len(Objets) > 0):
         ax.add_patch(patches.Rectangle((stand[0], stand[1]+stand[3]), stand[2], 0.2, color="white"))
     ax.set(xlim = (Xminn,Xmaxn),ylim = (Yminn, Ymaxn))
     im = ax.imshow(C,origin = "lower",cmap = plt.cm.rainbow, extent = (Xminn,Xmaxn,Yminn,Ymaxn),animated = True)
+    infect=len(p_infectious)+len(p_infecte)
+    ax.title.set_text("Nombre d'infectés : {0}".format(infect))
     ims.append([im])
     plt.pause(0.00001)
     n = n + 1
@@ -381,10 +403,8 @@ while (n < N_iter + 1 and len(Objets) > 0):
         f_obj[j,0] = sum(A[:,0])
         f_obj[j,1] = sum(A[:,1])
 
-    ## force attractive stands 
-  
-
     if (n == 1):
+        aZ=q
         continue
     ## prédiction de la vitesse
     f = f_ac + 1. / np.array(Masse) * (f_obj + f_obs)
@@ -403,7 +423,22 @@ while (n < N_iter + 1 and len(Objets) > 0):
                 V_new[j] = [V_new[j, 0], -1 * V_new[j, 1]]
 
     ## correction de la vitesse
-    q = q + (V_new+V_ant)*h/2
+    for k in range(len(Objets)):
+        z=zone(k)
+        if z==-1:
+            q[k] = q[k] + (V_new+V_ant)[k]*h/2
+        else :
+            if Z[k][z]==1:
+                if Z[k][-1]>1:
+                    Z[k][-1]-=1
+                else: 
+                    Z[k][-1]-=0
+                    q[k] = q[k] + (V_new+V_ant)[k]*h/2
+            else: 
+                Z[k][-1]=500
+                Z[k][z]=1
+
+
     V_ant = V_new
     Dist = []
     for i in range(len(Objets)):
