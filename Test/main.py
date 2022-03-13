@@ -1,19 +1,21 @@
 import numpy as np
 import random as rd
-import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from IPython import display
+import time
 
 #### INITIALISATION
 if (True):
-    Nb_indiv = 200
+    affiche_temps = True
+    list_departement = ["IMI","GCC","SGEF","VET","GMM","GI"]
+    Nb_indiv = 1000
     pop = np.zeros((3, 16))
-    pop[0] = np.array([0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00]) / 100
+    pop[0] = np.array([0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00]) / 100
     pop[1] = np.floor(Nb_indiv * pop[0])
     erreur = Nb_indiv - sum(pop[1])
     pop[1, 5] = pop[1, 5] + erreur
     pop[2] = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80]
+
     ## mise à jour de Nb_indiv
     Nb_indiv = sum(pop[1])
     ## Tableau contenant les vitesses souhaitées de chaque classe d'age
@@ -35,15 +37,12 @@ if (True):
                      67.005, 70.39]
     Masse_m[1] = [6.1, 2.816, 6.553, 8.798, 13.1, 13.1, 10.3, 10.3, 10.8, 10.8, 10.13, 10.3, 12.02, 13.63, 15.5,
                      16.71]
-    # Masse_m[2,:]=[1.22,0.488,1.16,5.192,5.192,5.152,5.152,4.728,4.728,3.782,3.782,3.70,3.70,4.492,4.492,4.314];
-    # Masse_m[2,:]=[1.22,0.488,5.82,25.95,25.95,25.76,25.76,23.64,23.64,18.91,18.91,18.5,18.5,22.46,22.46,21.57]
     densite = 500
     ##Tableau contenant les rayons
     Rayon_m = np.sqrt(Masse_m / (500 * np.pi))
     ## Tableau contenant l'amplitude de la force de repulsion pour differentes classes d'age
     Taille = 16
     A_m = np.zeros((2, Taille))
-    # A_m[1,:]=[10,10,75,110,122,127,142,142,180,225,247,247,290,305,305,305];
     A_m[0] = 700 * np.ones((1, Taille))
     A_m[1] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ## Tableau contenant la portee de la force de repulsion pour chaque classe
@@ -60,13 +59,11 @@ if (True):
     Taille = 16
     T_m = np.zeros((2, Taille))
     T_m[0] = [300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300, 300];
-    ## Le nombre d'obstacles & Sorties
-    Obstacles_Rectangles = []
     ##Les stands
     Stands=[]
     ## la durï¿½e de simulation, le pas de temps espace et le nombre d'itï¿½rations
-    T = 300
-    h = 1e-1;  # pas du temps
+    T = 30*60 #Une heure
+    h = 0.5;  # pas du temps 0.1 seconde
     N_iter = T / h
     n = 0
     ## le domaine dans lequel va ï¿½voluer le systï¿½me
@@ -84,13 +81,6 @@ if (True):
     Xmaxn = Xmax + nph * ph
     Yminn = Ymin - nph * ph
     Ymaxn = Ymax + nph * ph
-    ## Les parametres de l'equation de contact
-    K_N_obj = 1000
-    K_T_obj = 0
-    K_T_obs = 0
-    K_N_obs = 1e5
-    K_T = 0
-    K_N = 0
     ## Les parametres intervenant dans les forces
     ## la force repulsive pieton-pieton
     A_obj = []
@@ -102,7 +92,6 @@ if (True):
     A_obs = 1000
     B_obs = 0.8
     d_obs = 1.8
-    R_obs = 10
     #######################"
     ## Creation de la geometrie
     eps = 1
@@ -114,25 +103,24 @@ if (True):
     Allure = []
     Tau = []
     Code = []
+    Departement = []
     Obstacles_Rectangle = []
     Stand=[]
     Zone_Interdite = []
-    # Duree de visite du centre commercial
-    T_d = []
     ## Matrices pour la transmission du virus
     p_infecte = []
     p_infectious = []
-    p_s = []
+    Temps = []
     nbr_s = []
-    nbr_infecte = []
-    nbr_indirecte = []
-    nbr_directe = []
+    nbr_infecte = [0]
+    nbr_indirecte = [0]
+    nbr_directe = [0]
     ## Parmetres des equations de Concentration du virus
     sigma = (0.1732 / 3600);  # duree de vie du virus sur les surfaces
-    d0 = 2;  # distance maximale a  laquelle une surface est contaminee
+    d0 = 2;  # distance maximale à laquelle une surface est contaminee
     pd = 0.04
     hx = 0.5;  # le pas de discretisation
-
+    d_conta = 1.5
     ## discretisation de l'espace
     x = np.arange(Xminn, Xmaxn+hx, hx)
     y = np.arange(Yminn, Ymaxn+hx, hx)
@@ -147,11 +135,9 @@ if (True):
     n_directe = 0;  # le nombre de transmission directe
     n_indirecte = 0;  # le nombre de transmission indirecte
     # Initialisation de la matrice contenant les indices des individus
-    # infectieux
     p_infectious = []
-    t = 0
     ##matrice contenant le nombre de contamination pour chaque classe d'age
-    Matrix = np.zeros((1, 16))
+    TpsStand = 300 #5min de stand en moyenne
 
 #### FONCTIONS ANNEXES
 def direction_souhaitee(n,D_S):
@@ -160,31 +146,31 @@ def direction_souhaitee(n,D_S):
         choice = np.random.randint(1, 8, size = Nb_objets)
         D_S = np.array([Direcs[choix] for choix in choice])
     if (n % 10 == 0):
-        aa = np.random.randint(1, Nb_objets, size = int(np.floor(Nb_objets * 0.8)))
-        choice = np.random.randint(1, 8, size = int(np.floor(Nb_objets * 0.8)))
+        aa = np.random.randint(1, Nb_objets, size = int(np.floor(Nb_objets * 0.5)))
+        choice = np.random.randint(1, 8, size = int(np.floor(Nb_objets * 0.5)))
         D_S[aa] = Direcs[choice]
     return D_S
 
 def Dis_obstacle_rectangle(j):
     A = []
-    Objet = Objets[j]
+    Objet = q[j]
     rayon = Rayon[j]
     for obstacle in Obstacles_Rectangle:
         x1,y1,x2,y2 = obstacle
-        dy = ( (y2 - Objet[1])*(y2 > Objet[1]) + (y1 - Objet[1])*(y1 < Objet[1]) ) * (Objet[0] > x1 and Objet[0] < x2) + 10e99 * (Objet[0] <= x1 or Objet[0] >= x2)
-        dx = ( (Objet[0] - x2)*(Objet[0] > x2) + (x1 - Objet[0])*(Objet[0] < x1) ) * (Objet[1] < y2 and Objet[1] > y1) + 10e99 * (Objet[1] <= y1 or Objet[1] >= y2)
-        d = np.sqrt(dx**2 + dy **2)
-        A.append([(d_obs > dx)*A_obs*np.exp((d_obs - d)/B_obs)*(-1)*(dx <= 0),(d_obs > dy)*A_obs*np.exp((d_obs - d)/B_obs)*(-1)*(dy<=0) ])
-        return np.array(A)
+        dy = ( (-1*y2 - rayon + Objet[1])*(y2 < Objet[1]) + ( - y1 + rayon + Objet[1])*(y1 > Objet[1]) ) * (Objet[0] > x1 and Objet[0] < x2) + 10e99 * (Objet[0] <= x1 or Objet[0] >= x2)
+        dx = ( ( Objet[0] - rayon - x2)*(Objet[0] > x2) + ( - x1 + rayon + Objet[0])*(Objet[0] < x1) ) * (Objet[1] < y2 and Objet[1] > y1) + 10e99 * (Objet[1] <= y1 or Objet[1] >= y2)
+        d = np.sqrt((dx < 10000)*dx**2 + (dy < 10000)*dy**2)
+        A.append([(d_obs > abs(dx))*A_obs*np.exp((d_obs - d)/B_obs)*((-1)*(dx <= 0)+ (dx > 0)),(d_obs > abs(dy))*A_obs*np.exp((d_obs - d)/B_obs)*((-1)*(dy<=0) + (dy > 0)) ])
+    return np.array(A)
 
 def Dis_objet_objet(i):
     A = []
-    Objet = Objets[i]
+    Objet = q[i]
     rayon = Rayon[i]
     dir = D_S[i]
     for j in range(len(Objets)):
         x2,y2 = Objet
-        x1,y1 = Objets[j]
+        x1,y1 = q[j]
         dist = np.sqrt((x1 - x2)**2 + (y1 - y2)**2) - rayon - Rayon[j]
         dist = max(0,dist)
         if np.sqrt((x1 - x2)**2 + (y1 - y2)**2) != 0:
@@ -197,24 +183,12 @@ def Dis_objet_objet(i):
         return np.array(A)
 
 def Ajouter_Obstacle_Rectangle(x,y,longueur,largeur):
-    global Obstacles_Rectangles
     Obstacles_Rectangle.append([x,y,x+longueur,y+largeur])
 
 def Ajouter_Zone_Interdite(x,y,largeur,longueur):
     Zone_Interdite.append([x,y,x+largeur,y+longueur])
 
 def Ajouter_Objet(x,y,ray,cod,allure):
-    global Objets
-    global Rayon
-    global Masse
-    global Code
-    global Allure
-    global d_obj
-    global A_obj
-    global B_obj
-    global Tau
-    global T_d
-
     Objets.append([x,y])
     Rayon.append(ray)
     Masse.append([densite*np.pi*ray**2,densite*np.pi*ray**2])
@@ -225,7 +199,7 @@ def Ajouter_Objet(x,y,ray,cod,allure):
     B_obj.append(B_m[0,cod]+ B_m[1,cod]*rd.random())
     tau= Tau_m[0,cod] + Tau_m[1,cod]*rd.gauss(0,1)
     Tau.append([tau,tau])
-    T_d.append(T_m[0,cod] + T_m[1,cod]*rd.gauss(0,1))
+    Departement.append(list_departement[rd.randint(0,5)])
 
 def Ajouter_Plusieurs_Objets(N,cod):
     global Mass
@@ -266,21 +240,20 @@ def Ajouter_Plusieurs_Objets(N,cod):
                 else:
                     neglige = 1
 
-def in_zone(x,y,i):
-    X,Y,l,h=Stands[i]
-    if X+l/5<x<X+4*l/5 and Y+h/5<y<Y+4*h/5:
+def in_zone(k,i):
+    x = q[k][0]
+    y = q[k][1]
+    X,Y,l,h,dep=Stands[i]
+    if X+l/5<x<X+4*l/5 and Y+h/5<y<Y+4*h/5 and Departement[k] == dep:
         return True
     else: 
         return False
 
 def zone(k):
-    resu=0
+    resu=-1
     for i in range(len(Stands)):
-        if in_zone(q[k][0],q[k][1],i):
+        if in_zone(k,i):
             resu=i
-    if resu==0:
-        if in_zone(q[k][0],q[k][1],i)==False:
-            resu=-1
     return resu
 
 #### AJOUT OBSTACLES ET OBJETS
@@ -300,7 +273,6 @@ if (True):
     Ajouter_Obstacle_Rectangle(0,45,17,11)
     Ajouter_Obstacle_Rectangle(0,34,25,11)
     Ajouter_Obstacle_Rectangle(0,10,8,25)
-    Ajouter_Obstacle_Rectangle(60,0,50,10)
     #stands
     mini=1
     for i in range(3):
@@ -331,55 +303,75 @@ if (True):
     Stands.append([38,34,4,5])
     Stands.append([50,16,4.5,5])
     Stands.append([50,25,4.5,5])
-    #obstacke représentant l'entrée
-    #obstacle représentant la salle à droite
-    Ajouter_Obstacle_Rectangle(76,Ymin+5,eps,25)
-    Ajouter_Obstacle_Rectangle(76,40,eps,20)
     #ajout des personnes
     for i in range(len(pop[2])):
         Ajouter_Plusieurs_Objets(int(pop[1,i]),i)
     q = np.array(Objets)
     p_infectious = rd.sample([i for i in range(len(Objets))],3)
     ### Initialisation de la matrice contenant les indices des susceptibles
-    p_s = np.array(range(len(Objets)))
-    p_s = p_s.copy()
-    p_s = list(set(p_s).difference(set(p_infectious)))
+    p_s = np.zeros((len(Objets)))
+    for p in p_infectious:
+        p_s[p] = 1
     D_S = np.array(range(len(Objets)),dtype= tuple)
+    for stand in Stands:
+        stand.append(list_departement[rd.randint(0,5)])
+
+## Stand contaminé (direct)
+n_st_dir = 3
+list_st_dir = []
+for i in range(n_st_dir):
+    r = rd.randint(54,len(Stands) - 1)
+    while (r in list_st_dir):
+        r = rd.randint(54, len(Stands) - 1)
+    list_st_dir.append(r)
+print(list_st_dir)
 
 dimZ=len(Stands)+1
-Z=[[0 for i in range(len(Stands)+1)] for j in range(len(Objets))]
-
+Z=[[ TpsStand*(Departement[j] == Stands[i][4]) for i in range(len(Stands))] for j in range(len(Objets))]
 V_ant = np.zeros((len(Objets),2))
-ims = []
 fig, ax = plt.subplots()
 while (n < N_iter + 1 and len(Objets) > 0):
-    ax.cla()
-    ax.scatter(0, 0, s=0.1, c='black')
-    for j in range(len(q)):
-        ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="purple"))
-    for j in p_infectious:
-        ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="red"))
-    for j in p_infecte:
-        ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="yellow"))
-    for obstacle in Obstacles_Rectangle:
-        x = obstacle[0]
-        y = obstacle[1]
-        width = obstacle[2] - obstacle[0]
-        height = obstacle[3] - obstacle[1]
-        ax.add_patch(patches.Rectangle((x, y), width, height, color="black"))
-    for stand in Stands:
-        ax.add_patch(patches.Rectangle((stand[0],stand[1]),0.2,stand[3],color="white"))
-        ax.add_patch(patches.Rectangle((stand[0], stand[1]), stand[2], 0.2, color="white"))
-        ax.add_patch(patches.Rectangle((stand[0]+stand[2], stand[1]), 0.2, stand[3], color="white"))
-        ax.add_patch(patches.Rectangle((stand[0], stand[1]+stand[3]), stand[2], 0.2, color="white"))
-    ax.set(xlim = (Xminn,Xmaxn),ylim = (Yminn, Ymaxn))
-    im = ax.imshow(C,origin = "lower",cmap = plt.cm.rainbow, extent = (Xminn,Xmaxn,Yminn,Ymaxn),animated = True)
-    infect=len(p_infectious)+len(p_infecte)
-    ax.title.set_text("Nombre d'infectés : {0}".format(infect))
-    ims.append([im])
-    plt.pause(0.00001)
-    n = n + 1
-    t = t + h
+    t0 = time.time()
+    Temps.append(n)
+    if (n%20 == 0):
+        print(n)
+        ax.cla()
+        ax.scatter(0, 0, s=0.1, c='black')
+        for j in range(len(q)):
+            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="white"))
+        for j in p_infectious:
+            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="red"))
+        for j in p_infecte:
+            ax.add_patch(plt.Circle((q[j, 0], q[j, 1]), Rayon[j], color="yellow"))
+        for obstacle in Obstacles_Rectangle:
+            x = obstacle[0]
+            y = obstacle[1]
+            width = obstacle[2] - obstacle[0]
+            height = obstacle[3] - obstacle[1]
+            ax.add_patch(patches.Rectangle((x, y), width, height, color="black"))
+        for stand in Stands:
+            ax.add_patch(patches.Rectangle((stand[0],stand[1]),0.2,stand[3],color="green"))
+            ax.add_patch(patches.Rectangle((stand[0], stand[1]), stand[2], 0.2, color="green"))
+            ax.add_patch(patches.Rectangle((stand[0]+stand[2], stand[1]), 0.2, stand[3], color="green"))
+            ax.add_patch(patches.Rectangle((stand[0], stand[1]+stand[3]), stand[2], 0.2, color="green"))
+        for ind_stand in list_st_dir:
+            stand = Stands[ind_stand]
+            ax.add_patch(patches.Rectangle((stand[0],stand[1]),0.2,stand[3],color="red"))
+            ax.add_patch(patches.Rectangle((stand[0], stand[1]), stand[2], 0.2, color="red"))
+            ax.add_patch(patches.Rectangle((stand[0]+stand[2], stand[1]), 0.2, stand[3], color="red"))
+            ax.add_patch(patches.Rectangle((stand[0], stand[1]+stand[3]), stand[2], 0.2, color="red"))
+        ax.set(title = "n = {0}".format(n), xlim = (Xminn,Xmaxn),ylim = (Yminn, Ymaxn))
+        im = ax.imshow(C,origin = "lower", extent = (Xminn,Xmaxn,Yminn,Ymaxn),vmin = 0, vmax = 0.01)
+        right_inset_ax = fig.add_axes([.60, .6, .2, .2])
+        right_inset_ax.plot(Temps,nbr_infecte,'r')
+        right_inset_ax.plot(Temps, nbr_indirecte,'b')
+        right_inset_ax.plot(Temps, nbr_directe,'g')
+        right_inset_ax.set(xticks = [i*(i%500 == 0) for i in range(n)], yticks = [i*(i%10 == 0) for i in range(n_infecte+1)])
+        plt.pause(0.001)
+    n = n+1
+    if (affiche_temps):
+        print(time.time() - t0, "affichage")
+    t0 = time.time()
     Objets = np.array(Objets)
     ## parametre servant à l'implémentation de la transmission
     Wd = np.zeros((len(X),len(X[0])))
@@ -402,14 +394,13 @@ while (n < N_iter + 1 and len(Objets) > 0):
         A = Dis_objet_objet(j)
         f_obj[j,0] = sum(A[:,0])
         f_obj[j,1] = sum(A[:,1])
+    if (affiche_temps):
+        print(time.time() - t0, "force")
+    t0 = time.time()
 
-    if (n == 1):
-        aZ=q
-        continue
     ## prédiction de la vitesse
-    f = f_ac + 1. / np.array(Masse) * (f_obj + f_obs)
-    V_new = V_ant + h * f
-
+    f = f_ac + (1. / np.array(Masse)) * (f_obj + f_obs)
+    V_new = V_ant + h*f
     ## chocs
     qprime = q + (V_new+V_ant)*h/2
     for j in range(len(Objets)):
@@ -425,31 +416,38 @@ while (n < N_iter + 1 and len(Objets) > 0):
     ## correction de la vitesse
     for k in range(len(Objets)):
         z=zone(k)
+        if z in list_st_dir:
+            prob = rd.random()
+            if prob < pd and p_s[k] == 0:
+                print("ind infecté !")
+                # Affichage
+                n_directe = n_directe + 1
+                n_infecte = n_infecte + 1
+                p_infecte.append(k)
+                p_s[k] = 1
         if z==-1:
             q[k] = q[k] + (V_new+V_ant)[k]*h/2
         else :
-            if Z[k][z]==1:
-                if Z[k][-1]>1:
-                    Z[k][-1]-=1
-                else: 
-                    Z[k][-1]-=0
-                    q[k] = q[k] + (V_new+V_ant)[k]*h/2
-            else: 
-                Z[k][-1]=500
-                Z[k][z]=1
-
-
+            if Z[k][z] > 0:
+                Z[k][z] -= 1
+    if (affiche_temps):
+        print(time.time() - t0, "correction vitesse")
+    t0 = time.time()
     V_ant = V_new
     Dist = []
-    for i in range(len(Objets)):
+    for i in range(len(p_infectious)):
         list_dist = []
         for j in range(len(Objets)):
-            if i != j :
-                list_dist.append(np.sqrt((q[i,0]-q[j,0])**2 + (q[i,1]- q[j,1])**2))
+            r = p_infectious[i]
+            if r != j :
+                list_dist.append(np.sqrt((q[r,0]-q[j,0])**2 + (q[r,1]- q[j,1])**2))
             else :
                 list_dist.append(10e99)
         Dist.append(list_dist)
     Dist = np.array(Dist)
+    if (affiche_temps):
+        print(time.time() - t0, "distance")
+    t0 = time.time()
 
     ## implémentation de la transmission
     if len(p_infectious) != 0:
@@ -463,10 +461,10 @@ while (n < N_iter + 1 and len(Objets) > 0):
 
     ## contamination directe
     if len(p_infectious) != 0 :
-        if len(p_s) != 0 :
-            for p in p_infectious:
+        if sum(p_s) != len(p_s) :
+            for p in range(len(p_infectious)):
                 mdist = Dist[p,:]
-                col = np.where(mdist<5)[0]
+                col = np.where(mdist < d_conta)[0]
                 col = list(set(col).difference(set(p_infecte)))
                 if len(col) != 0 :
                     prob = np.array([rd.random() for i in range(len(col))])
@@ -474,43 +472,36 @@ while (n < N_iter + 1 and len(Objets) > 0):
                     if len(indf) != 0:
                         print("ind infecté !")
                         # Affichage
-                        v_test = v_test + 1
                         n_directe = n_directe + len(indf)
                         n_infecte = n_infecte + len(indf)
-                        #nbr_directe = [nbr_directe, t, n_directe];
-                        #nbr_infecte = [nbr_infecte, t, n_infecte];
-                        #p_infecte = [p_infecte, col(indf)]
-                        #co = Code(col(indf))
-                        #categ = categorical(co, [1:16], {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16'})
-                        #Matrix = Matrix + histcounts(categ)
                         for p_inf in indf :
-                            p_infecte.append(col[p_inf])
-
+                            if p_s[col[p_inf]] == 0:
+                                p_infecte.append(col[p_inf])
+                                p_s[col[p_inf]] = 1
     ## contamination indirecte
     if len(p_infectious) != 0:
         if len(p_s) != 0:
-            for p in p_s:
-                ip = np.argmin([abs(q[i, 0] - x) for x in X[0]])
-                jp = np.argmin([abs(q[i, 1] - y) for y in Y[:, 0]])
-                prob=rd.random()
-                p_a= 0.015 * C[jp, ip]
-                if p_a > prob :
-                    print("ind infecté")
-                    # Affichage
-                    v_test=v_test+1
-                    n_indirecte=n_indirecte+1
-                    #nbr_indirecte=[nbr_indirecte;t, n_indirecte];
-                    n_infecte=n_infecte+1
-                    #nbr_infecte=[nbr_infecte;t, n_infecte];
-                    #p_infecte=[p_infecte;p_s(indf)];
-                    #co=Code(p_s(indf));
-                    #categ = categorical(co, [1:16], {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16'})
-                    #Matrix = Matrix + histcounts(categ)
-                    p_s.pop(p)
-                    p_infecte.append(p)
-    #if v_test == 0 :
-        #nbr_directe = [nbr_directe;t, n_directe];
-        #nbr_indirecte = [nbr_indirecte;t, n_indirecte];
-        #nbr_infecte = [nbr_infecte;t, n_infecte];
+            for p in range(len(p_s)):
+                if p_s[p] == 0:
+                    ip = np.argmin([abs(q[p, 0] - x) for x in X[0]])
+                    jp = np.argmin([abs(q[p, 1] - y) for y in Y[:, 0]])
+                    prob=rd.random()
+                    p_a= 0.015 * C[jp, ip]
+                    if p_a > prob :
+                        print("ind infecté")
+                        print(q[p],C[np.argmin([abs(q[p, 1] - x) for x in X[0]])][np.argmin([abs(q[p, 0] - y) for y in Y[:, 0]])])
+                        # Affichage
+                        v_test=v_test+1
+                        n_indirecte=n_indirecte+1
+                        n_infecte=n_infecte+1
+                        p_s[p] = 1
+                        p_infecte.append(p)
     C = C + h * (0.001 * Wd - sigma * C)
+    nbr_infecte.append(n_infecte)
+    nbr_indirecte.append(n_indirecte)
+    nbr_directe.append(n_directe)
+    if (affiche_temps):
+        print(time.time() - t0, "transmission")
+
+
 plt.show()
