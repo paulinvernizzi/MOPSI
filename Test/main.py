@@ -4,18 +4,20 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import time
 
+fichier = open("Donnees.txt", 'a')
 t0 = time.time()
 Instances_ss_distanciation = []
+fichier.write('Instances_ss_distanciation : \n')
 iteration_test = 10
-for i in range(iteration_test):
-    print(i)
+for iter in range(iteration_test):
+    print(iter)
     #### INITIALISATION
     if (True):
-        affiche_temps = True
-        affichage = True
-        frequence_affichage = 10
+        affiche_temps = False
+        affichage = False
+        frequence_affichage = 1
         list_departement = ["IMI","GCC","SGEF","VET","GMM","GI"]
-        Nb_indiv = 500
+        Nb_indiv = 800
         pop = np.zeros((3, 16))
         pop[0] = np.array([0, 0, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0.00, 0.00, 0.00, 0.00]) / 100
         pop[1] = np.floor(Nb_indiv * pop[0])
@@ -70,7 +72,7 @@ for i in range(iteration_test):
         ##Les stands
         Stands=[]
         ## la durï¿½e de simulation, le pas de temps espace et le nombre d'itérations
-        T = 10*60 # Cinq minutes
+        T = 5*60 # cinq minutes
         h = 0.5;  # pas du temps 0.1 seconde
         N_iter = int(T / h)
         n = 0
@@ -147,7 +149,7 @@ for i in range(iteration_test):
         # Initialisation de la matrice contenant les indices des individus
         p_infectious = []
         ##matrice contenant le nombre de contamination pour chaque classe d'age
-        TpsStandMin,TpsStandMax = 50, 150 # 1 minute de stand en moyenne
+        TpsStandMin,TpsStandMax = 30, 60 # 1 minute de stand en moyenne
         TpsStandMin,TpsStandMax = int(TpsStandMin / h), int(TpsStandMax/h)
         StandCap = 10
 
@@ -346,7 +348,7 @@ for i in range(iteration_test):
     StandNbr = [0 for i in range(len(Stands))]
     dimZ=len(Stands)+1
     Z=[[ rd.randint(TpsStandMin,TpsStandMax)*(Departement[j] == Stands[i][4]) for i in range(len(Stands))] for j in range(len(Objets))]
-    Z0 = np.array(Z).copy()
+    Z0 = [ np.array(Z[i]).copy() for i in range(len(Z))]
     V_ant = np.zeros((len(Objets),2))
     fig, ax = plt.subplots()
 
@@ -384,7 +386,7 @@ for i in range(iteration_test):
                 ax.add_patch(patches.Rectangle((stand[0], stand[1]+stand[3]), stand[2], 0.2, color="red"))
             ax.set(title = "n = {0}".format(n), xlim = (Xminn,Xmaxn),ylim = (Yminn, Ymaxn))
             im = ax.imshow(C,origin = "lower", extent = (Xminn,Xmaxn,Yminn,Ymaxn),vmin = 0, vmax = 0.01)
-            right_inset_ax = fig.add_axes([.60, .6, .2, .2])
+            right_inset_ax = fig.add_axes([.55, .6, .2, .2])
             right_inset_ax.plot(Temps,nbr_infecte,'r')
             right_inset_ax.plot(Temps, nbr_indirecte,'b')
             right_inset_ax.plot(Temps, nbr_directe,'g')
@@ -455,17 +457,16 @@ for i in range(iteration_test):
                     p_s[k] = 1
             if z==-1 :
                 q[k] = q[k] + (V_new + V_ant)[k] * h / 2
-            elif StandNbr[z] >= StandCap:
-                q[k] = q[k] + (V_new+V_ant)[k]*h/2
-            else :
-                if Z[k][z] >= 0:
+            elif StandNbr[z] < StandCap and Z[k][z] == Z0[k][z]:
+                StandNbr[z] += 1
+                Z[k][z] -= 1
+            elif Z[k][z] == 1:
+                    StandNbr[z] -= 1
                     Z[k][z] -= 1
-                elif Z[k][z] == Z0[k][z]-1:
-                    StandNbr[z] += 1
-                elif Z[k][z] == 1:
-                    StandNbr[k] -= 1
-                else :
-                    q[k] = q[k] + (V_new + V_ant)[k] * h / 2
+            elif Z[k][z] < Z0[k][z] and Z[k][z] > 0:
+                    Z[k][z] -= 1
+            else :
+                q[k] = q[k] + (V_new + V_ant)[k] * h / 2
 
         ## Evite les mouvements absurdes
         q_depasse = []
@@ -492,7 +493,6 @@ for i in range(iteration_test):
         for i in range(len(q)):
             if in_cadre(q[i]):
                 q_depasse.append(q[i])
-        print(len(q_depasse))
         if (affiche_temps):
             print(time.time() - t0, "correction vitesse")
         t0 = time.time()
@@ -567,7 +567,12 @@ for i in range(iteration_test):
             print(time.time() - t0, "transmission")
     if affichage:
         plt.show()
-    Instances_ss_distanciation.append([nbr_infecte,nbr_indirecte,nbr_directe,nb_stand_infecte])
-    print(time.time() - t0)
-
-print(time.time() - t0)
+    Instances_ss_distanciation.append([n_infecte,n_indirecte,n_directe,n_stand_infecte])
+    fichier.write('Instance {0}\n'.format(iter))
+    fichier.write( 'n_infecte = {0} '.format(n_infecte))
+    fichier.write('n_indirecte = {0} '.format(n_indirecte))
+    fichier.write('n_directe = {0} '.format(n_directe))
+    fichier.write('n_stand_infecte = {0} '.format(n_stand_infecte))
+    print([n_infecte,n_indirecte,n_directe,n_stand_infecte])
+print(Instances_ss_distanciation)
+fichier.close()
